@@ -110,7 +110,7 @@ import org.slf4j.LoggerFactory;
  */
 @Public
 @Stable
-public abstract class AMRMClientAsync<T extends ContainerRequest> 
+public abstract class AMRMClientAsync<T extends ContainerRequest>
 extends AbstractService {
   private static final Logger LOG =
           LoggerFactory.getLogger(AMRMClientAsync.class);
@@ -478,6 +478,7 @@ extends AbstractService {
    * the <code>ResourceManager</code> are available.
    * </p>
    */
+  //lyc:am和rm的回调（非阻塞），当applicaitonmaster触发事件时候，回调
   public abstract static class AbstractCallbackHandler
       implements CallbackHandler {
 

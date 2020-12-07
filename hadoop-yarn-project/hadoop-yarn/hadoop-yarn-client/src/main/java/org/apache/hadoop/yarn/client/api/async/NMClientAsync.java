@@ -267,6 +267,7 @@ public abstract class NMClientAsync extends AbstractService {
    * catch, log and then ignore it.
    * </p>
    */
+  //lyc:am和nm的回调/rm和nm的回调，都使用这个类，非阻塞
   public abstract static class AbstractCallbackHandler
       implements CallbackHandler {
     /**
