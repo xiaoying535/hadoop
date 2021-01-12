@@ -326,6 +326,7 @@ public class FSLeafQueue extends FSQueue {
     }
   }
 
+  //lyc 底层叶子队列的资源分配
   @Override
   public Resource assignContainer(FSSchedulerNode node) {
     Resource assigned = none();
@@ -338,6 +339,7 @@ public class FSLeafQueue extends FSQueue {
       return assigned;
     }
 
+    //lyc 遍历叶子节点所有有资源需求的 APP，并对其尝试分配 Container
     for (FSAppAttempt sched : fetchAppsWithDemand(true)) {
       if (SchedulerAppUtils.isPlaceBlacklisted(sched, node, LOG)) {
         continue;
@@ -354,6 +356,7 @@ public class FSLeafQueue extends FSQueue {
     return assigned;
   }
 
+  // lyc assignment：是用户分配container，而不是抢占，如果是用于抢占，则校验是否要饿死，如果是分配container，则返回所有pending的app attemp
   /**
    * Fetch the subset of apps that have unmet demand. When used for
    * preemption-related code (as opposed to allocation), omits apps that
@@ -368,6 +371,8 @@ public class FSLeafQueue extends FSQueue {
         new TreeSet<>(policy.getComparator());
     readLock.lock();
     try {
+      //lyc 遍历running的app，如果有为满足资源的appattemp并且当前是要抢占则返回该app
+      // 如果有未满足资源的appattemp，则返回该app
       for (FSAppAttempt app : runnableApps) {
         if (!Resources.isNone(app.getPendingDemand()) &&
             (assignment || app.shouldCheckForStarvation())) {

@@ -400,6 +400,8 @@ public class CapacityScheduler extends
     }
   }
 
+
+  //lyc 1 启动线程池
   private void startSchedulerThreads() {
     try {
       writeLock.lock();
@@ -515,9 +517,11 @@ public class CapacityScheduler extends
    * Schedule on all nodes by starting at a random point.
    * @param cs
    */
+  //lyc 全局调度
   static void schedule(CapacityScheduler cs) throws InterruptedException{
     // First randomize the start point
     int current = 0;
+    //lyc 获取所有的节点
     Collection<FiCaSchedulerNode> nodes = cs.nodeTracker.getAllNodes();
 
     // If nodes size is 0 (when there are no node managers registered,
@@ -526,6 +530,7 @@ public class CapacityScheduler extends
     if(nodeSize == 0) {
       return;
     }
+    //lyc 随机选取了一个节点
     int start = random.nextInt(nodeSize);
 
     // To avoid too verbose DEBUG logging, only print debug log once for
@@ -537,19 +542,22 @@ public class CapacityScheduler extends
       printedVerboseLoggingForAsyncScheduling = false;
     }
 
+    //lyc 对于start到end的节点进行分配container
     // Allocate containers of node [start, end)
     for (FiCaSchedulerNode node : nodes) {
       if (current++ >= start) {
         if (shouldSkipNodeSchedule(node, cs, printSkipedNodeLogging)) {
           continue;
         }
+        //lyc 分配的主要逻辑
         cs.allocateContainersToNode(node.getNodeID(), false);
       }
     }
 
     current = 0;
 
-    // Allocate containers of node [0, start)
+      //lyc 对于0到start的节点进行分配container
+      // Allocate containers of node [0, start)
     for (FiCaSchedulerNode node : nodes) {
       if (current++ > start) {
         break;
@@ -577,6 +585,7 @@ public class CapacityScheduler extends
       setDaemon(true);
     }
 
+    //lyc 线程池每个线程的调度逻辑，多线程抢占的方式，这种？？？
     @Override
     public void run() {
       int debuggingLogCounter = 0;
@@ -585,6 +594,7 @@ public class CapacityScheduler extends
           if (!runSchedules.get()) {
             Thread.sleep(100);
           } else {
+              //lyc 如果调度等待的队列小于设定的值，默认是每隔1ms进行一次调度判断
             // Don't run schedule if we have some pending backlogs already
             if (cs.getAsyncSchedulingPendingBacklogs()
                 > cs.asyncMaxPendingBacklogs) {
@@ -624,7 +634,7 @@ public class CapacityScheduler extends
     private BlockingQueue<ResourceCommitRequest<FiCaSchedulerApp, FiCaSchedulerNode>>
         backlogs = new LinkedBlockingQueue<>();
 
-    public ResourceCommitterService(CapacityScheduler cs) {
+    public backlogsResourceCommitterService(CapacityScheduler cs) {
       this.cs = cs;
       setDaemon(true);
     }
@@ -638,6 +648,7 @@ public class CapacityScheduler extends
 
           try {
             cs.writeLock.lock();
+            //lyc  判断资源申请提案
             cs.tryCommit(cs.getClusterResource(), request, true);
           } finally {
             cs.writeLock.unlock();
@@ -653,7 +664,7 @@ public class CapacityScheduler extends
 
     public void addNewCommitRequest(
         ResourceCommitRequest<FiCaSchedulerApp, FiCaSchedulerNode> proposal) {
-      backlogs.add(proposal);
+      .add(proposal);
     }
 
     public int getPendingBacklogs() {
@@ -1231,6 +1242,7 @@ public class CapacityScheduler extends
     return getRootQueue().getQueueUserAclInfo(user);
   }
 
+  //lyc 心跳调度
   @Override
   protected void nodeUpdate(RMNode rmNode) {
     long begin = System.nanoTime();
@@ -1543,7 +1555,7 @@ public class CapacityScheduler extends
       }
       return null;
     }
-
+       //lyc 调度资源逻辑
     return allocateOrReserveNewContainers(candidates, withNodeHeartbeat);
   }
 
@@ -1691,6 +1703,7 @@ public class CapacityScheduler extends
       updateNodeLabelsAndQueueResource(labelUpdateEvent);
     }
     break;
+        //lyc 会进行资源分配
     case NODE_UPDATE:
     {
       NodeUpdateSchedulerEvent nodeUpdatedEvent = (NodeUpdateSchedulerEvent)event;
@@ -2631,6 +2644,7 @@ public class CapacityScheduler extends
     return list;
   }
 
+  //lyc 把逻辑上分配到的议案提交到ResourceCommitterService的处理队列中等待判决
   @VisibleForTesting
   public void submitResourceCommitRequest(Resource cluster,
       CSAssignment csAssignment) {
@@ -2845,6 +2859,7 @@ public class CapacityScheduler extends
       // proposal might be outdated if AM failover just finished
       // and proposal queue was not be consumed in time
       if (app != null && attemptId.equals(app.getApplicationAttemptId())) {
+        //lyc app.apply提交成功过
         if (app.accept(cluster, request, updatePending)
             && app.apply(cluster, request, updatePending)) {
           long commitSuccess = System.nanoTime() - commitStart;

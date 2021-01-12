@@ -651,10 +651,12 @@ public class ActiveStandbyElector implements StatCallback, StringCallback {
     String path = event.getPath();
     if (path != null) {
       switch (eventType) {
+        // lyc 节点删除事件
       case NodeDeleted:
         if (state == State.ACTIVE) {
           enterNeutralMode();
         }
+        // lyc：开始选举
         joinElectionInternal();
         break;
       case NodeDataChanged:
@@ -730,6 +732,7 @@ public class ActiveStandbyElector implements StatCallback, StringCallback {
     monitorLockNodeAsync();
   }
 
+  //lyc 选举，创建临时节点
   private void joinElectionInternal() {
     Preconditions.checkState(appData != null,
         "trying to join election without any app data");

@@ -132,7 +132,7 @@ import org.slf4j.LoggerFactory;
 /**
  * An ApplicationMaster for executing shell commands on a set of launched
  * containers using the YARN framework.
- * 
+ *
  * <p>
  * This class is meant to act as an example on how to write yarn-based
  * application masters.
@@ -156,7 +156,7 @@ import org.slf4j.LoggerFactory;
  * <code>ResourceManager</code> that it is up and alive. The
  * {@link ApplicationMasterProtocol#allocate} to the <code>ResourceManager</code> from the
  * <code>ApplicationMaster</code> acts as a heartbeat.
- * 
+ * lyc:ApplicationMasterProtocol从am的心跳中分配资源
  * <p>
  * For the actual handling of the job, the <code>ApplicationMaster</code> has to
  * request the <code>ResourceManager</code> via {@link AllocateRequest} for the
@@ -176,6 +176,7 @@ import org.slf4j.LoggerFactory;
  * submit a {@link StartContainerRequest} to the {@link ContainerManagementProtocol} to
  * launch and execute the defined commands on the given allocated container.
  * </p>
+ * lyc: 对于每一个申请到的container，am可以设置ContainerLaunchContext指定containerId、需要的资源、设置的环境、执行的命令等，
  * 
  * <p>
  * The <code>ApplicationMaster</code> can monitor the launched container by
@@ -279,6 +280,8 @@ public class ApplicationMaster {
   protected AtomicInteger numAllocatedContainers = new AtomicInteger();
   // Count of failed containers
   private AtomicInteger numFailedContainers = new AtomicInteger();
+
+  //lyc 一次性请求，除非request container发生变化
   // Count of containers already requested from the RM
   // Needed as once requested, we should not request for containers again.
   // Only request for more if the original requirement changes.
@@ -755,6 +758,7 @@ public class ApplicationMaster {
         UserGroupInformation.createRemoteUser(appSubmitterUserName);
     appSubmitterUgi.addCredentials(credentials);
 
+    // lyc 初始化 AMRMClient 实例，用于向 RM 发送 RPC 请求，这里采用异步方式，每个 AMRMClient 都是单独的线程
     AMRMClientAsync.AbstractCallbackHandler allocListener =
         new RMCallbackHandler();
     amRMClient = AMRMClientAsync.createAMRMClientAsync(1000, allocListener);
@@ -979,11 +983,14 @@ public class ApplicationMaster {
     return success;
   }
 
+  //lyc am会启动一个独立线程，对心跳获取的queue中的container和node进行的回调
+  //
   @VisibleForTesting
   class RMCallbackHandler extends AMRMClientAsync.AbstractCallbackHandler {
     @SuppressWarnings("unchecked")
     @Override
     public void onContainersCompleted(List<ContainerStatus> completedContainers) {
+      //lyc 收到rm有containers完成后回调
       LOG.info("Got response from RM for container ask, completedCnt="
           + completedContainers.size());
       for (ContainerStatus containerStatus : completedContainers) {
@@ -1003,6 +1010,7 @@ public class ApplicationMaster {
         assert (containerStatus.getState() == ContainerState.COMPLETE);
         // ignore containers we know nothing about - probably from a previous
         // attempt
+        //lyc launchedContainers记录am已经创建的container，忽略没有记录的container
         if (!launchedContainers.contains(containerStatus.getContainerId())) {
           LOG.info("Ignoring completed status of "
               + containerStatus.getContainerId()
@@ -1012,8 +1020,10 @@ public class ApplicationMaster {
 
         // increment counters for completed/failed containers
         int exitStatus = containerStatus.getExitStatus();
+        //lyc exitStatus如果不是0，非正常完成
         if (0 != exitStatus) {
           // container failed
+          //lyc container如果失败了
           if (ContainerExitStatus.ABORTED != exitStatus) {
             // shell script failed
             // counts as completed
@@ -1022,10 +1032,13 @@ public class ApplicationMaster {
           } else {
             // container was killed by framework, possibly preempted
             // we should re-try as the container was lost for some reason
+            //lyc 如果container是被框架kill调，可能是抢占，我们要重试
             numAllocatedContainers.decrementAndGet();
             numRequestedContainers.decrementAndGet();
             // we do not need to release the container as it would be done
             // by the RM
+            //lyc 我们不需要去释放container，因为rm会去做
+
 
             // Ignore these containers if placementspec is enabled
             // for the time being.
@@ -1036,6 +1049,7 @@ public class ApplicationMaster {
         } else {
           // nothing to do
           // container completed successfully
+          // lyc exitStatus退出是0的话，代表成功完成container
           numCompletedContainers.incrementAndGet();
           LOG.info("Container completed successfully." + ", containerId="
               + containerStatus.getContainerId());

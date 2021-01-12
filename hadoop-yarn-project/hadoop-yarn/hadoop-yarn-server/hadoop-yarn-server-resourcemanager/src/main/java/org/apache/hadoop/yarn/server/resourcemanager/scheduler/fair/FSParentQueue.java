@@ -204,6 +204,7 @@ public class FSParentQueue extends FSQueue {
     readLock.lock();
     try {
       for (FSQueue child : childQueues) {
+        //lyc 遍历所有子节点，对子节点在进行遍历，深度遍历，直达是叶子节点
         assigned = child.assignContainer(node);
         if (!Resources.equals(assigned, Resources.none())) {
           break;

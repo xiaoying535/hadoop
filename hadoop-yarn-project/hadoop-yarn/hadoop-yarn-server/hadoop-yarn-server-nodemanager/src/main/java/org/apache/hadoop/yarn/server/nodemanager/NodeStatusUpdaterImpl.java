@@ -254,8 +254,10 @@ public class NodeStatusUpdaterImpl extends AbstractService implements
       // Registration has to be in start so that ContainerManager can get the
       // perNM tokens needed to authenticate ContainerTokens.
       this.resourceTracker = getRMClient();
+      //lyc: nodemanager注册到rm
       registerWithRM();
       super.serviceStart();
+      //lyc：独立线程进行nm心跳上报，如果采用心跳调度（还有一种调度是异步调度），那每次心跳rm都会进行该节点的调度
       startStatusUpdater();
     } catch (Exception e) {
       String errorMessage = "Unexpected error starting NodeStatusUpdater";
@@ -373,6 +375,7 @@ public class NodeStatusUpdaterImpl extends AbstractService implements
     // during RM recovery
     synchronized (this.context) {
       List<NMContainerStatus> containerReports = getNMContainerStatuses();
+      //lyc： request就是注册给rm的信息
       RegisterNodeManagerRequest request =
           RegisterNodeManagerRequest.newInstance(nodeId, httpPort, totalResource,
               nodeManagerVersionId, containerReports, getRunningApplications(),
@@ -492,6 +495,7 @@ public class NodeStatusUpdaterImpl extends AbstractService implements
   @VisibleForTesting
   protected NodeStatus getNodeStatus(int responseId) throws IOException {
 
+    // lyc 包括是否Heath，以及unhealth时的状态报告信息
     NodeHealthStatus nodeHealthStatus = this.context.getNodeHealthStatus();
     nodeHealthStatus.setHealthReport(healthChecker.getHealthReport());
     nodeHealthStatus.setIsNodeHealthy(healthChecker.isHealthy());
@@ -501,9 +505,13 @@ public class NodeStatusUpdaterImpl extends AbstractService implements
       LOG.debug("Node's health-status : " + nodeHealthStatus.getIsNodeHealthy()
           + ", " + nodeHealthStatus.getHealthReport());
     }
+    // lyc 当前NM上Container的状态
     List<ContainerStatus> containersStatuses = getContainerStatuses();
+    //lyc Container声明的资源占用情况
     ResourceUtilization containersUtilization = getContainersUtilization();
+    //lyc NM被声明的资源占用情况
     ResourceUtilization nodeUtilization = getNodeUtilization();
+    //lyc 获得自上次心跳以来，占用资源有所增长的Container
     List<org.apache.hadoop.yarn.api.records.Container> increasedContainers
         = getIncreasedContainers();
     NodeStatus nodeStatus =
@@ -1060,10 +1068,12 @@ public class NodeStatusUpdaterImpl extends AbstractService implements
     }
   }
 
+  // lyc 启动单独的线程，与rm进行回报心跳
   private class StatusUpdaterRunnable implements Runnable {
     @Override
     @SuppressWarnings("unchecked")
     public void run() {
+      //lyc 每次心跳的responseid，每次心跳会校验，是否是上次的请求，如果是上次请求，直接reponse，如果是更早的请求，直接让RESYNC
       int lastHeartbeatID = 0;
       while (!isStopped) {
         // Send heartbeat
@@ -1072,6 +1082,7 @@ public class NodeStatusUpdaterImpl extends AbstractService implements
           Set<NodeLabel> nodeLabelsForHeartbeat =
               nodeLabelsHandler.getNodeLabelsForHeartbeat();
           NodeStatus nodeStatus = getNodeStatus(lastHeartbeatID);
+          //lyc 心跳requst请求，除了nodestatus里面的信息，还有container的认证，nm认证，
           NodeHeartbeatRequest request =
               NodeHeartbeatRequest.newInstance(nodeStatus,
                   NodeStatusUpdaterImpl.this.context
@@ -1092,12 +1103,13 @@ public class NodeStatusUpdaterImpl extends AbstractService implements
               request.setLogAggregationReportsForApps(logAggregationReports);
             }
           }
-
+          //lyc 心跳调度的主要逻辑
           response = resourceTracker.nodeHeartbeat(request);
           //get next heartbeat interval from response
           nextHeartBeatInterval = response.getNextHeartBeatInterval();
           updateMasterKeys(response);
 
+          //lyc 返回让nm shutdown或者resync
           if (!handleShutdownOrResyncCommand(response)) {
             nodeLabelsHandler.verifyRMHeartbeatResponseForNodeLabels(
                 response);
@@ -1112,6 +1124,7 @@ public class NodeStatusUpdaterImpl extends AbstractService implements
                 .getContainersToBeRemovedFromNM());
 
             logAggregationReportForAppsTempList.clear();
+            //lyc 获取responseid
             lastHeartbeatID = response.getResponseId();
             List<ContainerId> containersToCleanup = response
                 .getContainersToCleanup();

@@ -45,6 +45,7 @@ import org.slf4j.LoggerFactory;
  * Classes which need callbacks should implement the {@link Callback}
  * interface.
  */
+// lyc 循环运行的守护进程，定期心跳，跟踪服务的运行状况
 @InterfaceAudience.Private
 public class HealthMonitor {
   private static final Logger LOG = LoggerFactory.getLogger(

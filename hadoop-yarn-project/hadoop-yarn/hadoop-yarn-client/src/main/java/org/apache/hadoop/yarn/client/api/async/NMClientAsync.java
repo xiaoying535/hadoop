@@ -268,6 +268,7 @@ public abstract class NMClientAsync extends AbstractService {
    * </p>
    */
   //lyc:am和nm的回调/rm和nm的回调，都使用这个类，非阻塞
+    //如果要实现自己的am，则需要实现这个回调
   public abstract static class AbstractCallbackHandler
       implements CallbackHandler {
     /**
@@ -278,6 +279,7 @@ public abstract class NMClientAsync extends AbstractService {
      * @param allServiceResponse a Map between the auxiliary service names and
      *                           their outputs
      */
+    //lyc:当接受到启动container请求时调用
     public abstract void onContainerStarted(ContainerId containerId,
         Map<String, ByteBuffer> allServiceResponse);
 
@@ -288,6 +290,7 @@ public abstract class NMClientAsync extends AbstractService {
      * @param containerId the Id of the container
      * @param containerStatus the status of the container
      */
+    //lyc：当nm应答container当前状态时调用
     public abstract void onContainerStatusReceived(ContainerId containerId,
         ContainerStatus containerStatus);
 
@@ -297,6 +300,7 @@ public abstract class NMClientAsync extends AbstractService {
      *
      * @param containerId the Id of the container
      */
+    //lyc:当nm应答container已停止
     public abstract void onContainerStopped(ContainerId containerId);
 
     /**

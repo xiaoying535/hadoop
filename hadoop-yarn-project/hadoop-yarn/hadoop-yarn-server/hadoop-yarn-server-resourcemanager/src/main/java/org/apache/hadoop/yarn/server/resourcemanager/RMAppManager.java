@@ -309,6 +309,7 @@ public class RMAppManager implements EventHandler<RMAppManagerEvent>,
     }
   }
 
+  // lyc:提交application
   @SuppressWarnings("unchecked")
   protected void submitApplication(
       ApplicationSubmissionContext submissionContext, long submitTime,

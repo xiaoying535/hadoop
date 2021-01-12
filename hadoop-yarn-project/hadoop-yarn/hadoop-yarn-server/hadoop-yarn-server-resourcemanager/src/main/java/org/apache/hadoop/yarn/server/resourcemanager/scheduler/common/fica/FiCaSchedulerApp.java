@@ -562,6 +562,7 @@ public class FiCaSchedulerApp extends SchedulerApplicationAttempt {
                 schedulerContainer.getSchedulerNode(), reservedContainer);
           }
 
+          //lyc 分配了一个新constainer
           // Allocate a new container
           addToNewlyAllocatedContainers(
               schedulerContainer.getSchedulerNode(), rmContainer);

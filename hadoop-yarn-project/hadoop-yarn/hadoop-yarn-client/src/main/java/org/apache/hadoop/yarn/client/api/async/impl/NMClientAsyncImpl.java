@@ -66,6 +66,7 @@ import org.slf4j.LoggerFactory;
 
 @Private
 @Unstable
+//lyc:实现NMClientAsync
 public class NMClientAsyncImpl extends NMClientAsync {
 
   private static final Logger LOG =
@@ -614,6 +615,7 @@ public class NMClientAsyncImpl extends NMClientAsync {
         MultipleArcTransition<StatefulContainer, ContainerEvent,
         ContainerState> {
 
+      //lyc 启动container
       @Override
       public ContainerState transition(
           StatefulContainer container, ContainerEvent event) {

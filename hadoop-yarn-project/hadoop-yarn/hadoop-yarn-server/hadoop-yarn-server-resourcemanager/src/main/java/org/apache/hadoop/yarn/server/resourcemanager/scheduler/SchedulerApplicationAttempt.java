@@ -137,6 +137,7 @@ public class SchedulerApplicationAttempt implements SchedulableEntity {
   private AtomicLong firstAllocationRequestSentTime = new AtomicLong(0);
   private AtomicLong firstContainerAllocatedTime = new AtomicLong(0);
 
+  //lyc 存放schedule的新的container
   protected List<RMContainer> newlyAllocatedContainers = new ArrayList<>();
   protected List<RMContainer> tempContainerToKill = new ArrayList<>();
   protected Map<ContainerId, RMContainer> newlyPromotedContainers = new HashMap<>();

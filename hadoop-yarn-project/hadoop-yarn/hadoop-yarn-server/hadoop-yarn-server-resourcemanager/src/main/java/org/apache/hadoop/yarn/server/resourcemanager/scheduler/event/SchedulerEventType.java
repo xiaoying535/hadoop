@@ -21,22 +21,22 @@ package org.apache.hadoop.yarn.server.resourcemanager.scheduler.event;
 public enum SchedulerEventType {
 
   // Source: Node
-  NODE_ADDED,
-  NODE_REMOVED,
-  NODE_UPDATE,
-  NODE_RESOURCE_UPDATE,
-  NODE_LABELS_UPDATE,
+  NODE_ADDED,//集群中增加一个节点
+  NODE_REMOVED,//集群中移除一个节点
+  NODE_UPDATE,//该时间是NodeManager通过心跳和ResourceManager通信时发送的，会汇报该node的资源使用情况，同时出发一次分配操作
+  NODE_RESOURCE_UPDATE,//集群中有一个节点的资源增加了
+  NODE_LABELS_UPDATE,//更新node labels。node labels可以用于划分一个cluster的node，每个node可以有一个label
 
   // Source: RMApp
-  APP_ADDED,
-  APP_REMOVED,
+  APP_ADDED,//增加一个Application
+  APP_REMOVED,//移除一个application
 
   // Source: RMAppAttempt
-  APP_ATTEMPT_ADDED,
-  APP_ATTEMPT_REMOVED,
+  APP_ATTEMPT_ADDED,//增加一个application Attempt
+  APP_ATTEMPT_REMOVED,//移除一个application attempt
 
   // Source: ContainerAllocationExpirer
-  CONTAINER_EXPIRED,
+  CONTAINER_EXPIRED,//回收一个超时的container
 
   // Source: SchedulerAppAttempt::pullNewlyUpdatedContainer.
   RELEASE_CONTAINER,

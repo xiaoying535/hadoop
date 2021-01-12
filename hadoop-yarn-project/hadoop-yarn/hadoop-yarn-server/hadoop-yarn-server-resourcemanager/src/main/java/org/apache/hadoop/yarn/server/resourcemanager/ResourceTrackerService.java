@@ -313,6 +313,7 @@ public class ResourceTrackerService extends AbstractService implements
     }
   }
 
+  // lyc：
   @SuppressWarnings("unchecked")
   @Override
   public RegisterNodeManagerResponse registerNodeManager(
@@ -465,7 +466,7 @@ public class ResourceTrackerService extends AbstractService implements
       }
     }
 
-    // Update node's labels to RM's NodeLabelManager.
+    // Update node's labels to RM's NodeLabelMaRanager.
     Set<String> nodeLabels = NodeLabelsUtils.convertToStringSet(
         request.getNodeLabels());
     if (isDistributedNodeLabelsConf && nodeLabels != null) {
@@ -493,12 +494,14 @@ public class ResourceTrackerService extends AbstractService implements
     }
 
     LOG.info(message.toString());
+    // lyc： action是nomal（正常）、resync（当responseid的不是上次请求时候）、shutdown（需要decommison节点时）三种
     response.setNodeAction(NodeAction.NORMAL);
     response.setRMIdentifier(ResourceManager.getClusterTimeStamp());
     response.setRMVersion(YarnVersionInfo.getVersion());
     return response;
   }
 
+  //lyc 通过nm的nodestatusupdater启动单独的线程，nm与rm进行心跳，每次心跳，rm都会进行一次分配
   @SuppressWarnings("unchecked")
   @Override
   public NodeHeartbeatResponse nodeHeartbeat(NodeHeartbeatRequest request)
@@ -511,7 +514,7 @@ public class ResourceTrackerService extends AbstractService implements
      * 2. Check if it's a registered node
      * 3. Check if it's a 'fresh' heartbeat i.e. not duplicate heartbeat
      * 4. Send healthStatus to RMNode
-     * 5. Update node's labels if distributed Node Labels configuration is enabled
+     * 5. Update node's labels if distributed Node Labels configuration is enabled lyc 标签调度打开时用到
      */
 
     NodeId nodeId = remoteNodeStatus.getNodeId();
@@ -539,11 +542,13 @@ public class ResourceTrackerService extends AbstractService implements
     }
 
     // Send ping
+    //lyc 更新nmlinessmonitor里面的map，map存储每个节点的最新心跳时间
     this.nmLivelinessMonitor.receivedPing(nodeId);
     this.decommissioningWatcher.update(rmNode, remoteNodeStatus);
 
     // 3. Check if it's a 'fresh' heartbeat i.e. not duplicate heartbeat
     NodeHeartbeatResponse lastNodeHeartbeatResponse = rmNode.getLastNodeHeartBeatResponse();
+    //lyc 每次response都是+1，判断当前response+1是否等于上一次的，如果是上一次的请求，则直接返回上次的response
     if (getNextResponseId(
         remoteNodeStatus.getResponseId()) == lastNodeHeartbeatResponse
             .getResponseId()) {
@@ -552,6 +557,7 @@ public class ResourceTrackerService extends AbstractService implements
       return lastNodeHeartbeatResponse;
     } else if (remoteNodeStatus.getResponseId() != lastNodeHeartbeatResponse
         .getResponseId()) {
+      //lyc 如果当前的resonseid不是上次的responseid，也就是：上次请求id不对
       String message =
           "Too far behind rm response id:"
               + lastNodeHeartbeatResponse.getResponseId() + " nm response id:"
@@ -564,6 +570,7 @@ public class ResourceTrackerService extends AbstractService implements
           message);
     }
 
+    //lyc 是否是decommision节点
     // Evaluate whether a DECOMMISSIONING node is ready to be DECOMMISSIONED.
     if (rmNode.getState() == NodeState.DECOMMISSIONING &&
         decommissioningWatcher.checkReadyToBeDecommissioned(
@@ -607,6 +614,7 @@ public class ResourceTrackerService extends AbstractService implements
     }
 
     // 4. Send status to RMNode, saving the latest response.
+    //lyc 进入状态机，rmnodeImp处理该事件
     RMNodeStatusEvent nodeStatusEvent =
         new RMNodeStatusEvent(nodeId, remoteNodeStatus);
     if (request.getLogAggregationReportsForApps() != null

@@ -418,6 +418,8 @@ public abstract class FSQueue implements Queue, Schedulable {
    * 
    * @return true if check passes (can assign) or false otherwise
    */
+  //lyc 如果含有预留container，则直接返回false，不能进行分配
+  // 如果资源的使用量超过，则返回false
   boolean assignContainerPreCheck(FSSchedulerNode node) {
     if (node.getReservedContainer() != null) {
       if (LOG.isDebugEnabled()) {

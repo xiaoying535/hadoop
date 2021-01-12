@@ -204,6 +204,7 @@ public class RMNodeImpl implements RMNode, EventHandler<RMNodeEvent> {
           new DeactivateNodeTransition(NodeState.DECOMMISSIONED))
 
       //Transitions from RUNNING state
+          //lyc nm的心跳，会通过nodeStatusUpdaterImpl启动单独线程---->resourceTrackerService---->发送事件
       .addTransition(NodeState.RUNNING,
           EnumSet.of(NodeState.RUNNING, NodeState.UNHEALTHY),
           RMNodeEventType.STATUS_UPDATE,
@@ -1238,6 +1239,7 @@ public class RMNodeImpl implements RMNode, EventHandler<RMNodeEvent> {
 
       if(rmNode.nextHeartBeat) {
         rmNode.nextHeartBeat = false;
+        // lyc 重点：向 RM 发送一个 NodeUpdateSchedulerEvent 事件,reourcemanager,java会处理这个事件
         rmNode.context.getDispatcher().getEventHandler().handle(
             new NodeUpdateSchedulerEvent(rmNode));
       }

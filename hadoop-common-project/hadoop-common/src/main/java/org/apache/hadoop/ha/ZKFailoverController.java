@@ -944,6 +944,7 @@ public abstract class ZKFailoverController {
   /**
    * Callbacks from HealthMonitor
    */
+  // lyc healthMonitor.java检测到不健康时候到，调用回调
   class HealthCallbacks implements HealthMonitor.Callback {
     @Override
     public void enteredState(HealthMonitor.State newState) {
@@ -957,6 +958,7 @@ public abstract class ZKFailoverController {
    */
   class ServiceStateCallBacks implements HealthMonitor.ServiceStateCallback {
     @Override
+
     public void reportServiceStatus(HAServiceStatus status) {
       verifyChangedServiceState(status.getState());
     }

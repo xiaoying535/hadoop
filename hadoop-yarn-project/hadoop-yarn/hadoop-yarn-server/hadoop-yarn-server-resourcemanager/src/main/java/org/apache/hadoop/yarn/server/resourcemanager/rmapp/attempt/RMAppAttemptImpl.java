@@ -274,6 +274,7 @@ public class RMAppAttemptImpl implements RMAppAttempt, Recoverable {
             RMAppAttemptState.FAILED))
 
        // Transitions from ALLOCATED_SAVING State
+          //lyc AttemptStoredTransition发送lauch事件
       .addTransition(RMAppAttemptState.ALLOCATED_SAVING, 
           RMAppAttemptState.ALLOCATED,
           RMAppAttemptEventType.ATTEMPT_NEW_SAVED, new AttemptStoredTransition())
@@ -320,6 +321,7 @@ public class RMAppAttemptImpl implements RMAppAttempt, Recoverable {
               RMAppAttemptState.FAILED))
 
        // Transitions from ALLOCATED State
+          //lyc AMLauncher发送LAUNCHED事件
       .addTransition(RMAppAttemptState.ALLOCATED, RMAppAttemptState.LAUNCHED,
           RMAppAttemptEventType.LAUNCHED, LAUNCHED_TRANSITION)
       .addTransition(RMAppAttemptState.ALLOCATED, RMAppAttemptState.FINAL_SAVING,
@@ -343,6 +345,7 @@ public class RMAppAttemptImpl implements RMAppAttempt, Recoverable {
             new AMContainerCrashedBeforeRunningTransition(), RMAppAttemptState.FAILED))
 
        // Transitions from LAUNCHED State
+          //lyc 发送app的regist事件，app从accepted状态转为running
       .addTransition(RMAppAttemptState.LAUNCHED, RMAppAttemptState.RUNNING,
           RMAppAttemptEventType.REGISTERED, REGISTERED_TRANSITION)
       .addTransition(RMAppAttemptState.LAUNCHED,
@@ -1548,6 +1551,7 @@ public class RMAppAttemptImpl implements RMAppAttempt, Recoverable {
 
   private static class AMLaunchedTransition extends BaseTransition {
     @Override
+    //lyc App的LAUNCHED事件调用该函数
     public void transition(RMAppAttemptImpl appAttempt,
                             RMAppAttemptEvent event) {
       if (event.getType() == RMAppAttemptEventType.LAUNCHED
@@ -1561,6 +1565,7 @@ public class RMAppAttemptImpl implements RMAppAttempt, Recoverable {
       appAttempt
           .updateAMLaunchDiagnostics(AMState.LAUNCHED.getDiagnosticMessage());
       // Register with AMLivelinessMonitor
+      //lyc 如果appattempt注册后需要注册AMLivelinessMonitor，关注心跳
       appAttempt.attemptLaunched();
 
     }

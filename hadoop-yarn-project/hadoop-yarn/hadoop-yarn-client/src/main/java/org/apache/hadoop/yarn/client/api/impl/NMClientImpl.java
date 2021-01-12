@@ -177,6 +177,7 @@ public class NMClientImpl extends NMClient {
     }
   }
 
+  //lyc 启动contaienr
   @Override
   public Map<String, ByteBuffer> startContainer(
       Container container, ContainerLaunchContext containerLaunchContext)

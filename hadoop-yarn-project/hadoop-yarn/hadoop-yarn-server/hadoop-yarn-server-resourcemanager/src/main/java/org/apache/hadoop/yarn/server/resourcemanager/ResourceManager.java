@@ -426,6 +426,7 @@ public class ResourceManager extends CompositeService implements Recoverable {
     return new AsyncDispatcher("RM Event dispatcher");
   }
 
+  // lyc 这里根据配置，获取schedule的类，比如fair或者capacity
   protected ResourceScheduler createScheduler() {
     String schedulerClassName = conf.get(YarnConfiguration.RM_SCHEDULER,
         YarnConfiguration.DEFAULT_RM_SCHEDULER);
@@ -704,11 +705,13 @@ public class ResourceManager extends CompositeService implements Recoverable {
       rmContext.setNodesListManager(nodesListManager);
 
       // Initialize the scheduler
+      //lyc 根据配置初始化schedule，比如capacity或者fair
       scheduler = createScheduler();
       scheduler.setRMContext(rmContext);
       addIfService(scheduler);
       rmContext.setScheduler(scheduler);
 
+      //lyc nm心跳时候，会发送一个事件NodeUpdateSchedulerEvent
       schedulerDispatcher = createSchedulerEventDispatcher();
       addIfService(schedulerDispatcher);
       rmDispatcher.register(SchedulerEventType.class, schedulerDispatcher);

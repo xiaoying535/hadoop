@@ -130,7 +130,8 @@ public class ApplicationMasterLauncher extends AbstractService implements
     Runnable launcher = createRunnableLauncher(application, AMLauncherEventType.CLEANUP);
     masterEvents.add(launcher);
   } 
-  
+
+  //lyc 创建application
   @Override
   public synchronized void  handle(AMLauncherEvent appEvent) {
     AMLauncherEventType event = appEvent.getType();

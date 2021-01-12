@@ -142,6 +142,7 @@ public class Component implements EventHandler<ComponentEvent> {
           .addTransition(INIT, INIT, CONTAINER_RECOVERED,
               new ContainerRecoveredTransition())
 
+              // lyc当amrmclientasyncImpl对接受到的rm心跳，调用onContainersReceivedFromPreviousAttempts时用到
           // container recovered in AM heartbeat
           .addTransition(FLEXING, FLEXING, CONTAINER_RECOVERED,
               new ContainerRecoveredTransition())
@@ -372,6 +373,7 @@ public class Component implements EventHandler<ComponentEvent> {
     }
   }
 
+  //lyc 恢复container时候调用的
   private static class ContainerRecoveredTransition extends BaseTransition {
     @Override
     public void transition(Component component, ComponentEvent event) {
@@ -397,6 +399,7 @@ public class Component implements EventHandler<ComponentEvent> {
           component.getName(), container.getId(),
           instance.getCompInstanceName(), container.getNodeId(),
           component.pendingInstances.size());
+      //lyc 发送启动container的事件
       component.dispatcher.getEventHandler().handle(
           new ComponentInstanceEvent(container.getId(), START));
     }

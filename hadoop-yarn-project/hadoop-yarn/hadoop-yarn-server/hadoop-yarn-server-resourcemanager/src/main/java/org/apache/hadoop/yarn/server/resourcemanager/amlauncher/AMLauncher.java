@@ -306,6 +306,7 @@ public class AMLauncher implements Runnable {
       try {
         LOG.info("Launching master" + application.getAppAttemptId());
         launch();
+        //lyc 发送laucher事件，RMAppAttemptImpl注册了该事件的hook
         handler.handle(new RMAppAttemptEvent(application.getAppAttemptId(),
             RMAppAttemptEventType.LAUNCHED));
       } catch(Exception ie) {

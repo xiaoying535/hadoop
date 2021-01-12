@@ -62,7 +62,8 @@ public abstract class RegisterNodeManagerRequest {
     request.setPhysicalResource(physicalResource);
     return request;
   }
-  
+
+  // lyc： 节点id，http端口， 资源总量， nm的version，所有container的信息， 所有applicationid，
   public abstract NodeId getNodeId();
   public abstract int getHttpPort();
   public abstract Resource getResource();

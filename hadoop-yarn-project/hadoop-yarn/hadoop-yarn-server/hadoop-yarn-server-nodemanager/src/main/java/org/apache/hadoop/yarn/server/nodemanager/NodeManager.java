@@ -276,6 +276,7 @@ public class NodeManager extends CompositeService
       }
       Path recoveryRoot = new Path(recoveryDirName);
       recoveryFs.mkdirs(recoveryRoot, new FsPermission((short)0700));
+      // lyc nodemanage采用leveldb存在store状态
       nmStore = new NMLeveldbStateStoreService();
     } else {
       nmStore = new NMNullStateStoreService();
@@ -407,6 +408,7 @@ public class NodeManager extends CompositeService
 
     nodeLabelsProvider = createNodeLabelsProvider(conf);
 
+    // lyc:nodeStatusUpdater 在创建时初始化实例 NodeStatusUpdaterImpl，它是真正负责与 RM 通讯的类，其中 serviceStart() 方法中会进行 NM 注册和心跳
     if (null == nodeLabelsProvider) {
       nodeStatusUpdater =
           createNodeStatusUpdater(context, dispatcher, nodeHealthChecker);
@@ -417,6 +419,7 @@ public class NodeManager extends CompositeService
               nodeLabelsProvider);
     }
 
+    // lyc 监控node的资源情况
     nodeResourceMonitor = createNodeResourceMonitor();
     addService(nodeResourceMonitor);
     ((NMContext) context).setNodeResourceMonitor(nodeResourceMonitor);

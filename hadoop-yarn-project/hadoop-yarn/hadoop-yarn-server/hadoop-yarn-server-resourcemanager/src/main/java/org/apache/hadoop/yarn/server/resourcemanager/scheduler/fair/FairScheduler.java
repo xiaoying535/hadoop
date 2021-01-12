@@ -218,6 +218,7 @@ public class FairScheduler extends
         getClusterResource(), resource, reservationThreshold);
   }
 
+  //lyc 校验conf配置，min和max资源配置，资源规整化因子
   private void validateConf(FairSchedulerConfiguration config) {
     // validate scheduler memory allocation setting
     int minMem = config.getInt(
@@ -920,6 +921,7 @@ public class FairScheduler extends
         application.pullPreviousAttemptContainers());
   }
 
+  //lyc 心跳调度方式，通过nodemanage的心跳为nm进行一次资源调度，attemptScheduling是实际的调度逻辑
   @Override
   protected void nodeUpdate(RMNode nm) {
     try {
@@ -937,6 +939,8 @@ public class FairScheduler extends
     }
   }
 
+  //lyc 连续调度方式，一个独立线程负责资源的调度，不需要等到nm发送心跳才进行调度，默认调度方式都是另一种，除非yarn.scheduler.fair.continuous-scheduling-enabled设置为true
+  //lyc 不推荐采用这种方式，因为锁的问题，导致资源调度变缓慢
   @Deprecated
   void continuousSchedulingAttempt() throws InterruptedException {
     long start = getClock().getTime();
@@ -947,6 +951,7 @@ public class FairScheduler extends
       nodeIdList = nodeTracker.sortedNodeList(nodeAvailableResourceComparator);
     }
 
+    //lyc：每一个节点都进行一次资源分配
     // iterate all nodes
     for (FSSchedulerNode node : nodeIdList) {
       try {
@@ -1021,6 +1026,7 @@ public class FairScheduler extends
     }
   }
 
+  //lyc 入参是资源分配的节点
   @VisibleForTesting
   void attemptScheduling(FSSchedulerNode node) {
     try {
@@ -1038,6 +1044,8 @@ public class FairScheduler extends
             "Skipping scheduling as the node " + nodeID + " has been removed");
         return;
       }
+
+      //lyc nm通过心跳开始分配container，主要的逻辑就是这里
 
       // Assign new containers...
       // 1. Ensure containers are assigned to the apps that preempted
@@ -1141,6 +1149,7 @@ public class FairScheduler extends
       NodeRemovedSchedulerEvent nodeRemovedEvent = (NodeRemovedSchedulerEvent)event;
       removeNode(nodeRemovedEvent.getRemovedRMNode());
       break;
+      //lyc nm心跳发送的事件类型NodeUpdateSchedulerEvent
     case NODE_UPDATE:
       if (!(event instanceof NodeUpdateSchedulerEvent)) {
         throw new RuntimeException("Unexpected event type: " + event);

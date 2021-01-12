@@ -355,6 +355,7 @@ public class ContainerManagerImpl extends CompositeService implements
       rsrcLocalizationSrvc.recoverLocalizedResources(
           stateStore.loadLocalizationState());
 
+      // lyc：nodemanage的statestore，存储在内存或者leveldb
       RecoveredApplicationsState appsState = stateStore.loadApplicationsState();
       for (ContainerManagerApplicationProto proto :
            appsState.getApplications()) {

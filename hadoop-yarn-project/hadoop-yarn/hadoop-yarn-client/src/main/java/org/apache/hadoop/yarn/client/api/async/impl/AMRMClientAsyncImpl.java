@@ -286,7 +286,8 @@ extends AMRMClientAsync<T> {
                               List<String> blacklistRemovals) {
     client.updateBlacklist(blacklistAdditions, blacklistRemovals);
   }
-  
+
+  //lyc am和rm的心跳
   private class HeartbeatThread extends Thread {
     public HeartbeatThread() {
       super("AMRM Heartbeater thread");
@@ -330,7 +331,7 @@ extends AMRMClientAsync<T> {
       }
     }
   }
-  
+  //lyc 启动独立线程，对心跳的queue进行处理回调
   private class CallbackHandlerThread extends Thread {
     public CallbackHandlerThread() {
       super("AMRM Callback Handler Thread");

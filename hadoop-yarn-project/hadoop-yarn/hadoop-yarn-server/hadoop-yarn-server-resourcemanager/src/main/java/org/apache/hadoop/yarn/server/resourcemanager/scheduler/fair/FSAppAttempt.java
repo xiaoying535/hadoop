@@ -418,6 +418,7 @@ public class FSAppAttempt extends SchedulerApplicationAttempt
     }
   }
 
+  //lyc 这里rm就把node上的资源，分配出去
   public RMContainer allocate(NodeType type, FSSchedulerNode node,
       SchedulerRequestKey schedulerKey, PendingAsk pendingAsk,
       Container reservedContainer) {
@@ -446,16 +447,19 @@ public class FSAppAttempt extends SchedulerApplicationAttempt
 
       container = reservedContainer;
       if (container == null) {
+        //lyc 重点：这里会具体创建一个 Container 实例
         container = createContainer(node, pendingAsk.getPerAllocationResource(),
             schedulerKey);
       }
 
       // Create RMContainer
+      //lyc 用 RMContainer 记录新创建出来的 Container 实例
       rmContainer = new RMContainerImpl(container, schedulerKey,
           getApplicationAttemptId(), node.getNodeID(),
           appSchedulingInfo.getUser(), rmContext);
       ((RMContainerImpl) rmContainer).setQueueName(this.getQueueName());
 
+      //lyc 重点：记录 rmContainer，等待下次 AM 心跳发生时，会从这里把分配出来的 Container 带走
       // Add it to allContainers list.
       addToNewlyAllocatedContainers(node, rmContainer);
       liveContainers.put(container.getId(), rmContainer);
@@ -655,6 +659,7 @@ public class FSAppAttempt extends SchedulerApplicationAttempt
         getApplicationAttemptId(), getNewContainerId());
 
     // Create the container
+    //lyc 根据apatteeemptid和一个递增的数字拼接形成containerid， nodeid，http地址，资源容量， 优先级， requestid
     return BuilderUtils.newContainer(containerId, nodeId,
         node.getRMNode().getHttpAddress(), capability,
         schedulerKey.getPriority(), null,
@@ -852,10 +857,12 @@ public class FSAppAttempt extends SchedulerApplicationAttempt
     Resource available = node.getUnallocatedResource();
 
     Container reservedContainer = null;
+    //lyc 判断是否有预留，有预留在直接从该 node 获取对应资
     if (reserved) {
       reservedContainer = node.getReservedContainer().getContainer();
     }
 
+    //lyc 只要满足一个container就认为满足
     // Can we allocate a container on this node?
     if (Resources.fitsIn(capability, available)) {
       // Inform the application of the new container for this request
@@ -949,11 +956,13 @@ public class FSAppAttempt extends SchedulerApplicationAttempt
       LOG.trace("Node offered to app: " + getName() + " reserved: " + reserved);
     }
 
+    // lyc 按照优先级排序
     Collection<SchedulerRequestKey> keysToTry = (reserved) ?
         Collections.singletonList(
             node.getReservedContainer().getReservedSchedulerKey()) :
         getSchedulerKeys();
 
+    //lyc 相同优先级，采用node local ，rack local，
     // For each priority, see if we can schedule a node local, rack local
     // or off-switch request. Rack of off-switch requests may be delayed
     // (not scheduled) in order to promote better locality.
@@ -967,6 +976,7 @@ public class FSAppAttempt extends SchedulerApplicationAttempt
       for (SchedulerRequestKey schedulerKey : keysToTry) {
         // Skip it for reserved container, since
         // we already check it in isValidReservation.
+        //lyc 节点是否有预留   hasContainerForNode() 会分 node、rack、any 三种情况考虑该节点是否有合适的 Container
         if (!reserved && !hasContainerForNode(schedulerKey, node)) {
           continue;
         }
@@ -998,6 +1008,7 @@ public class FSAppAttempt extends SchedulerApplicationAttempt
               scheduler.getRackLocalityThreshold());
         }
 
+        //lyc 先调度node local的请求
         if (rackLocalPendingAsk.getCount() > 0
             && nodeLocalPendingAsk.getCount() > 0) {
           if (LOG.isTraceEnabled()) {
@@ -1365,8 +1376,10 @@ public class FSAppAttempt extends SchedulerApplicationAttempt
     demand = tmpDemand;
   }
 
+  //lyc 给appattempt分配资源
   @Override
   public Resource assignContainer(FSSchedulerNode node) {
+    //lyc 这里主要检查队列已使用资源是否达到了用于运行 AM 的资源限制
     if (isOverAMShareLimit()) {
       PendingAsk amAsk = appSchedulingInfo.getNextPendingAsk();
       updateAMDiagnosticMsg(amAsk.getPerAllocationResource(),

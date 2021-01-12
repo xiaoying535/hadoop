@@ -642,6 +642,7 @@ public class ClientRMService extends AbstractService implements
 
     try {
       // call RMAppManager to submit application directly
+      // lyc:提交application
       rmAppManager.submitApplication(submissionContext,
           System.currentTimeMillis(), user);
 
