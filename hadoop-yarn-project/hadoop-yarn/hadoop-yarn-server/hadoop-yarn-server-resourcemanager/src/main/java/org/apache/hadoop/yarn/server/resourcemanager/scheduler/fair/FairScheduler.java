@@ -947,6 +947,9 @@ public class FairScheduler extends
     List<FSSchedulerNode> nodeIdList;
     // Hold a lock to prevent comparator order changes due to changes of node
     // unallocated resources
+    // lyc 进行调度以前，先对节点根据剩余资源的多少进行排序，从而让资源更充裕的节点先得到调度
+    //  这样我们更容易让所有节点的资源能够被均匀分配，而不会因为某些节点总是先被调度所以总是比
+    //  后调度的节点的资源使用率更高
     synchronized (this) {
       nodeIdList = nodeTracker.sortedNodeList(nodeAvailableResourceComparator);
     }

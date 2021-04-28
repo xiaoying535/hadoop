@@ -40,6 +40,7 @@ import org.apache.hadoop.yarn.util.Records;
  */
 @Public
 @Unstable
+//lyc statestore
 public abstract class ApplicationStateData {
   public Map<ApplicationAttemptId, ApplicationAttemptStateData> attempts =
       new HashMap<ApplicationAttemptId, ApplicationAttemptStateData>();

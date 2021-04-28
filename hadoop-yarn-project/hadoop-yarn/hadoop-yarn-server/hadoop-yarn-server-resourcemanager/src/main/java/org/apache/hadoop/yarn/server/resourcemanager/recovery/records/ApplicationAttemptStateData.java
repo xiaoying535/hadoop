@@ -38,6 +38,7 @@ import java.util.Map;
  */
 @Public
 @Unstable
+//lyc statestore
 public abstract class ApplicationAttemptStateData {
 
   public static ApplicationAttemptStateData newInstance(
